@@ -6,6 +6,8 @@ import 'package:adel_tarek/ui/common/widgets/custom_text_field.dart';
 import 'package:adel_tarek/ui/style/app.colors.dart';
 import 'package:adel_tarek/ui/style/app.dimens.dart';
 import 'package:adel_tarek/utils/core.util.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sizer/sizer.dart';
 
 class SearchMealsScreen extends StatefulWidget {
   const SearchMealsScreen({super.key});
@@ -34,7 +36,12 @@ class _SearchMealsScreenState extends State<SearchMealsScreen> {
               Expanded(
                 child: FormInputField(
                   textEditingController: searchController,
-                  title: 'Search Meals',
+                  title: 'What are you looking for?',
+                  onChanged: (value) {
+                    context
+                        .read<MealBloc>()
+                        .add(SearchMeals(searchController.text));
+                  },
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.search),
                     onPressed: () {
@@ -63,55 +70,67 @@ class _SearchMealsScreenState extends State<SearchMealsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                Center(
+                                  child: GestureDetector(
+                                    onVerticalDragDown: (details) =>
+                                        Navigator.pop(context),
+                                    child: Column(
+                                      children: [
+                                        SvgPicture.asset(
+                                            'assets/icons/Divider.svg'),
+                                        SizedBox(
+                                            height:
+                                                screenAwareHeight(24, context)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                                 const Text(
-                                  "categories",
+                                  "Categories",
                                   style: TextStyle(
-                                      fontSize: 18, color: Colors.black),
+                                      fontSize: 20,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500),
                                 ),
-                                Expanded(
-                                  child: ListView.builder(
-                                      itemCount: state.categories.length,
-                                      itemBuilder: (context, index) {
-                                        final category =
-                                            state.categories[index];
-                                        return InkWell(
-                                          onTap: () {
-                                            setState(() {
-                                              selectedCategory = category;
-                                            });
-                                            context.read<MealBloc>().add(
-                                                FilterMealsByCategory(
-                                                    category));
-                                            Navigator.pop(context);
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(8.0),
-                                            margin: const EdgeInsets.symmetric(
-                                                vertical: 8),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.grey
-                                                      .withOpacity(0.5),
-                                                  spreadRadius: 0,
-                                                  blurRadius: 4,
-                                                  offset: const Offset(0, 3),
-                                                ),
-                                              ],
-                                              borderRadius:
-                                                  BorderRadius.circular(8.0),
-                                            ),
-                                            child: Text(
-                                              category,
-                                              style: const TextStyle(
-                                                  fontSize: 16,
-                                                  color: Colors.black),
-                                            ),
+                                const SizedBox(height: 16),
+                                Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: state.categories.map((category) {
+                                      return InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            selectedCategory = category;
+                                          });
+                                          context.read<MealBloc>().add(
+                                              FilterMealsByCategory(category));
+                                          Navigator.pop(context);
+                                        },
+                                        child: Chip(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 4),
+                                          side: const BorderSide(
+                                              color: Colors.grey, width: 0.5),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
                                           ),
-                                        );
-                                      }),
-                                ),
+                                          label: Text(
+                                            category,
+                                            style: TextStyle(
+                                                color:
+                                                    selectedCategory == category
+                                                        ? Colors.white
+                                                        : Colors.black),
+                                          ),
+                                          backgroundColor:
+                                              selectedCategory == category
+                                                  ? AppColors.primaryColor
+                                                      .withOpacity(0.75)
+                                                  : Colors.grey.shade200,
+                                        ),
+                                      );
+                                    }).toList()),
                               ],
                             ),
                           );
@@ -128,15 +147,17 @@ class _SearchMealsScreenState extends State<SearchMealsScreen> {
                       horizontal: AppDimens.marginDefault8),
                   decoration: BoxDecoration(
                       color: Colors.white,
+                      border: Border.all(color: Colors.grey.withOpacity(0.5)),
                       borderRadius: BorderRadius.circular(8)),
-                  child: Icon(
+                  child: const Icon(
                     Icons.filter_list,
-                    color: AppColors.primaryColor,
+                    color: Colors.black,
                   ),
                 ),
               ),
             ],
           ),
+          SizedBox(height: screenAwareHeight(16, context)),
           Expanded(
             child: BlocBuilder<MealBloc, MealState>(
               builder: (context, state) {
@@ -145,54 +166,85 @@ class _SearchMealsScreenState extends State<SearchMealsScreen> {
                   itemBuilder: (context, index) {
                     final meal = state.searchResults[index];
                     return InkWell(
-                      onTap: () => showDialog(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          scrollable: true,
-                          title: Text(
-                            meal['strMeal'],
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textColor),
-                          ),
-                          content: SingleChildScrollView(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      child:
-                                          Image.network(meal['strMealThumb'])),
-                                  const SizedBox(height: 14),
-                                  Text(
-                                    meal['strInstructions'] ??
-                                        'No instructions available.',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: 16,
-                                        color: AppColors.textColor),
-                                  ),
-                                ],
-                              ),
-                            ),
+                      onTap: () => showModalBottomSheet(
+                        useSafeArea: true,
+                        isScrollControlled: true,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(15),
                           ),
                         ),
+                        context: context,
+                        builder: (context) {
+                          return BlocBuilder<MealBloc, MealState>(
+                            builder: (context, state) {
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                height: screenAwareHeight(85.h, context),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Center(
+                                      child: GestureDetector(
+                                        onVerticalDragDown: (details) =>
+                                            Navigator.pop(context),
+                                        child: Column(
+                                          children: [
+                                            SvgPicture.asset(
+                                                'assets/icons/Divider.svg'),
+                                            SizedBox(
+                                                height: screenAwareHeight(
+                                                    24, context)),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: ListView(
+                                        children: [
+                                          ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              child: Image.network(
+                                                height: 30.h,
+                                                width: double.infinity,
+                                                meal['strMealThumb'],
+                                                fit: BoxFit.cover,
+                                              )),
+                                          const SizedBox(height: 14),
+                                          Text(
+                                            meal['strMeal'],
+                                            style: TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.textColor),
+                                          ),
+                                          const SizedBox(height: 14),
+                                          Text(
+                                            meal['strInstructions'] ??
+                                                'No instructions available.',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w400,
+                                                fontSize: 16,
+                                                color: AppColors.textColor),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
                       child: Container(
                         padding: const EdgeInsets.all(8.0),
-                        margin: const EdgeInsets.only(bottom: 16),
+                        margin: const EdgeInsets.only(bottom: 18),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5),
-                              spreadRadius: 2,
-                              blurRadius: 5,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
+                          border:
+                              Border.all(color: Colors.grey.withOpacity(0.5)),
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         child: Row(
@@ -200,16 +252,38 @@ class _SearchMealsScreenState extends State<SearchMealsScreen> {
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8.0),
                               child: Image.network(meal['strMealThumb'],
-                                  width: 75, height: 75, fit: BoxFit.cover),
+                                  width: 100, fit: BoxFit.cover),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 16),
                             Expanded(
-                              child: Text(
-                                meal['strMeal'],
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 18,
-                                    color: AppColors.textColor),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    meal['strMeal'],
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 18,
+                                        color: AppColors.textColor),
+                                  ),
+                                  Chip(
+                                    backgroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 4),
+                                    side: const BorderSide(
+                                        color: Colors.grey, width: 0.5),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    label: Text(
+                                      "${meal?['strCategory'] ?? selectedCategory}",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: 12,
+                                          color: AppColors.textColor),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],

@@ -170,7 +170,7 @@ class _FormInputFieldState extends State<FormInputField> {
                 suffixIcon: widget.suffixIcon,
                 counterText: '',
                 labelStyle: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     color: Colors.black,
                     fontWeight: FontWeight.w300),
                 contentPadding: EdgeInsets.only(

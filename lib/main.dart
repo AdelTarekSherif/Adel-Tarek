@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:adel_tarek/data/bloc/meals/meal_bloc.dart';
 import 'package:adel_tarek/ui/style/app.fonts.dart';
@@ -11,8 +12,10 @@ import 'package:adel_tarek/utils/router/router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  /// Lock device on portrait mode only
-  runApp(const Root());
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]).then((value) => runApp(const Root()));
 }
 
 class Root extends StatefulWidget {
